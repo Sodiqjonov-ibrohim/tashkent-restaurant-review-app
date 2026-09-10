@@ -12,15 +12,18 @@ app.use(express.static('public'));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'maxfiy_kalit_123';
 
-// --- TO'G'RILANGAN BAZAGA ULANISH QISMI ---
+// IPv4 Pooler (6543) manziliga majburiy ulanish
+const DB_URL = process.env.DATABASE_URL || 'postgresql://postgres.omtgapknfqbzzrtppznx:xusniddin001@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require';
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:12345@localhost:5432/tashkent_restaurants',
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+  connectionString: DB_URL.includes('6543') 
+    ? DB_URL 
+    : 'postgresql://postgres.omtgapknfqbzzrtppznx:xusniddin001@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require',
+  ssl: { rejectUnauthorized: false }
 });
 
-// Bazaga ulanishda xatolik bo'lsa server crash bo'lmasligi uchun
 pool.on('error', (err) => {
-  console.error('Kutilmagan DB xatoligi:', err);
+  console.error('Baza xatosi:', err);
 });
 
 // --- MIDDLEWARE: Token tekshirish ---
