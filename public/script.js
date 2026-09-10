@@ -1,4 +1,3 @@
-// Statik ma'lumotlar (Backend va Bazaga so'rov yuborilmaydi)
 const categories = [
   { id: 1, name: "Milliy taomlar" },
   { id: 2, name: "Fast Food" },
@@ -51,96 +50,72 @@ const restaurants = [
 let map;
 let markers = [];
 
-// Xaritani va sahifani yuklash
 document.addEventListener('DOMContentLoaded', () => {
   initMap();
   renderCategories();
   renderRestaurants(restaurants);
 
-  // Qidiruv va Filter voqealari
-  document.getElementById('searchInput')?.addEventListener('input', filterData);
-  document.getElementById('categoryFilter')?.addEventListener('change', filterData);
+  document.getElementById('searchInput').addEventListener('input', filterData);
+  document.getElementById('categoryFilter').addEventListener('change', filterData);
 });
 
-// Leaflet Xaritasini rejalashtirish
 function initMap() {
-  const mapElement = document.getElementById('map');
-  if (!mapElement) return;
-
   map = L.map('map').setView([41.311081, 69.240562], 12);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
   addMarkers(restaurants);
 }
 
-// Kategoriyalarni Select'ga chiqarish
 function renderCategories() {
   const select = document.getElementById('categoryFilter');
-  if (!select) return;
-
   categories.forEach(cat => {
-    const option = document.createElement('option');
-    option.value = cat.id;
-    option.textContent = cat.name;
-    select.appendChild(option);
+    const opt = document.createElement('option');
+    opt.value = cat.id;
+    opt.textContent = cat.name;
+    select.appendChild(opt);
   });
 }
 
-// Restoranlarni kartochka qilib chiqarish
 function renderRestaurants(list) {
   const container = document.getElementById('restaurantList');
-  if (!container) return;
-
   container.innerHTML = '';
 
   if (list.length === 0) {
-    container.innerHTML = '<p class="text-center">Hech qanday restoran topilmadi.</p>';
+    container.innerHTML = '<p>Restoran topilmadi.</p>';
     return;
   }
 
-  list.forEach(item => {
+  list.forEach(r => {
     const card = document.createElement('div');
-    card.className = 'restaurant-card';
+    card.className = 'card';
     card.innerHTML = `
-      <h3>${item.title}</h3>
-      <span class="badge">${item.category_name}</span>
-      <p>${item.description}</p>
-      <p><strong>📍 Manzil:</strong> ${item.address}</p>
-      <p><strong>📞 Tel:</strong> ${item.phone}</p>
-      <p><strong>⭐ Reyting:</strong> ${item.avg_rating} (${item.review_count} ta sharh)</p>
+      <h3>${r.title}</h3>
+      <span class="badge">${r.category_name}</span>
+      <p>${r.description}</p>
+      <p>📍 ${r.address}</p>
+      <p>📞 ${r.phone}</p>
+      <div class="rating">⭐ ${r.avg_rating} (${r.review_count} sharh)</div>
     `;
     container.appendChild(card);
   });
 }
 
-// Xaritaga markerlarni qo'shish
 function addMarkers(list) {
-  // Eskilarini tozalash
   markers.forEach(m => map.removeLayer(m));
   markers = [];
-
-  list.forEach(item => {
-    if (item.latitude && item.longitude) {
-      const marker = L.marker([item.latitude, item.longitude])
-        .addTo(map)
-        .bindPopup(`<b>${item.title}</b><br>${item.address}`);
-      markers.push(marker);
-    }
+  list.forEach(r => {
+    const m = L.marker([r.latitude, r.longitude]).addTo(map).bindPopup(`<b>${r.title}</b><br>${r.address}`);
+    markers.push(m);
   });
 }
 
-// Qidiruv va kategoriyalar bo'yicha saralash
 function filterData() {
-  const searchValue = document.getElementById('searchInput')?.value.toLowerCase() || '';
-  const categoryValue = document.getElementById('categoryFilter')?.value || '';
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const catId = document.getElementById('categoryFilter').value;
 
   const filtered = restaurants.filter(r => {
-    const matchesSearch = r.title.toLowerCase().includes(searchValue) || r.address.toLowerCase().includes(searchValue);
-    const matchesCategory = categoryValue === '' || r.category_id == categoryValue;
-    return matchesSearch && matchesCategory;
+    const matchSearch = r.title.toLowerCase().includes(search) || r.address.toLowerCase().includes(search);
+    const matchCat = catId === '' || r.category_id == catId;
+    return matchSearch && matchCat;
   });
 
   renderRestaurants(filtered);
