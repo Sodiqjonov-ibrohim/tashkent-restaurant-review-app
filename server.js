@@ -12,14 +12,14 @@ app.use(express.static('public'));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'maxfiy_kalit_123';
 
-// IPv4 Pooler (6543) manziliga majburiy ulanish
+// SSL sertifikat xatosini (self-signed certificate) batamom hal qiluvchi sozlama
 const DB_URL = process.env.DATABASE_URL || 'postgresql://postgres.omtgapknfqbzzrtppznx:xusniddin001@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require';
 
 const pool = new Pool({
-  connectionString: DB_URL.includes('6543') 
-    ? DB_URL 
-    : 'postgresql://postgres.omtgapknfqbzzrtppznx:xusniddin001@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require',
-  ssl: { rejectUnauthorized: false }
+  connectionString: DB_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 pool.on('error', (err) => {
