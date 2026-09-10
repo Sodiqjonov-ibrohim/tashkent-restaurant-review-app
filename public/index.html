@@ -4,43 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Toshkent Restoranlari</title>
+
+  <!-- Leaflet Xarita Stili -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-    body { background: #f4f6f8; }
-    header { background: #1e293b; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-    #map { height: 350px; width: 100%; border-bottom: 2px solid #ccc; }
-    .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
-    .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    .controls input, .controls select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; flex: 1; min-width: 200px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-    .card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .card h3 { color: #0f172a; margin-bottom: 8px; }
-    .badge { background: #e2e8f0; color: #334155; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-    .card p { margin-top: 8px; font-size: 14px; color: #475569; }
-    .rating { color: #f59e0b; font-weight: bold; margin-top: 10px; }
-  </style>
+
+  <!-- Shaxsiy CSS Faylingiz -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- Asosiy Tepalangan Sarlavha (Header) -->
   <header>
     <h2>🍽️ Toshkent Restoranlari</h2>
   </header>
 
+  <!-- Interaktiv Xarita -->
   <div id="map"></div>
 
+  <!-- Kontent Qismi (Qidiruv, Filter va Kartochkalar) -->
   <div class="container">
     <div class="controls">
-      <input type="text" id="searchInput" placeholder="Qidiruv...">
+      <input type="text" id="searchInput" placeholder="Restoran nomi yoki manzil bo'yicha qidiruv...">
       <select id="categoryFilter">
         <option value="">Barcha Kategoriyalar</option>
       </select>
     </div>
 
+    <!-- Restoranlar Chiqadigan Grid Maydoni -->
     <div id="restaurantList" class="grid"></div>
   </div>
 
+  <!-- Leaflet JS hamda Shaxsiy Script Faylingiz -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="script.js"></script>
+
 </body>
 </html>
