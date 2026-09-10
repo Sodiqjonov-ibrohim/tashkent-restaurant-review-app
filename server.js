@@ -13,14 +13,20 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // PostgreSQL connection
-const DB_URL = process.env.DATABASE_URL || 'postgresql://postgres.omtgapknfqbzzrtppznx:xusniddin001@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require';
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    }
+  : {
+      user: process.env.DB_USER || 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      database: process.env.DB_NAME || 'restaurant_db',
+      password: process.env.DB_PASSWORD,
+      port: process.env.DB_PORT || 5432
+    };
 
-const pool = new Pool({
-  connectionString: DB_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+const pool = new Pool(poolConfig);
 
 pool.on('error', (err) => {
   console.error('Baza xatosi (zaxira rejimiga o\'tiladi):', err.message);
@@ -117,7 +123,7 @@ app.get('/api/restaurants', async (req, res) => {
 });
 
 // Boshqa barcha so'rovlarni frontend index.html ga yo'naltirish
-app.get('*', (req, res) => {
+app.get('/{*splat}', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
