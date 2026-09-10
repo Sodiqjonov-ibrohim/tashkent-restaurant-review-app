@@ -25,7 +25,7 @@ const pool = new Pool(
         host: process.env.DB_HOST || 'localhost',
         database: process.env.DB_NAME || 'tashkent_restaurants',
         password: process.env.DB_PASSWORD || '12345',
-        port: process.env.DB_PORT || 6543,
+        port: process.env.DB_PORT || 5432,
       }
 );
 
