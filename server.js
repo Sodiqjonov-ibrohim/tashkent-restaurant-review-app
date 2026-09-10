@@ -10,15 +10,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+const { Pool } = require('pg');
+
 const JWT_SECRET = process.env.JWT_SECRET || 'maxfiy_kalit_123';
 
-const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'tashkent_restaurants',
-  password: process.env.DB_PASSWORD || '12345',
-  port: process.env.DB_PORT || 5432,
-});
+const pool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: {
+          rejectUnauthorized: false
+        }
+      }
+    : {
+        user: process.env.DB_USER || 'postgres',
+        host: process.env.DB_HOST || 'localhost',
+        database: process.env.DB_NAME || 'tashkent_restaurants',
+        password: process.env.DB_PASSWORD || '12345',
+        port: process.env.DB_PORT || 5432,
+      }
+);
 
 // --- MIDDLEWARE: Token tekshirish ---
 const authenticateToken = (req, res, next) => {
