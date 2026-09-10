@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toshkent Restoranlari va Sharhlar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 400px; border-radius: 12px; }
+        .restaurant-card { cursor: pointer; transition: transform 0.2s; }
+        .restaurant-card:hover { transform: translateY(-4px); }
+        .badge-rating { background-color: #ffc107; color: #000; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">🍽️ Toshkent Restoranlari</a>
+            <div class="d-flex align-items-center gap-2" id="authButtons">
+                <button type="button" class="btn btn-outline-light btn-sm" title="Tizimga kirish" aria-label="Tizimga kirish" data-bs-toggle="modal" data-bs-target="#loginModal">Kirish</button>
+                <button type="button" class="btn btn-primary btn-sm" title="Ro'yxatdan o'tish" aria-label="Ro'yxatdan o'tish" data-bs-toggle="modal" data-bs-target="#registerModal">Ro'yxatdan o'tish</button>
+            </div>
+            <div class="d-flex align-items-center gap-2 d-none" id="userInfo">
+                <span class="text-light me-2" id="userNameLabel"></span>
+                <button type="button" class="btn btn-success btn-sm d-none" id="adminAddBtn" title="Restoran qo'shish" aria-label="Restoran qo'shish" data-bs-toggle="modal" data-bs-target="#addRestaurantModal">+ Restoran Qo'shish</button>
+                <button type="button" class="btn btn-danger btn-sm" title="Tizimdan chiqish" aria-label="Tizimdan chiqish" onclick="logout()">Chiqish</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="map" class="mb-4"></div>
+
+        <div class="row mb-4 g-2">
+            <div class="col-md-5">
+                <input type="text" id="searchInput" class="form-control" placeholder="Qidiruv..." title="Restoran qidirish" aria-label="Restoran qidirish">
+            </div>
+            <div class="col-md-4">
+                <select id="categorySelect" class="form-select" title="Kategoriya bo'yicha saralash" aria-label="Kategoriya bo'yicha saralash">
+                    <option value="">Barcha Kategoriyalar</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select id="sortSelect" class="form-select" title="Tartiblash turi" aria-label="Tartiblash turi">
+                    <option value="">Eng yangilari</option>
+                    <option value="rating">Reyting (Yuqori)</option>
+                    <option value="name">Nomi (A-Z)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row" id="restaurantsList"></div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tizimga Kirish</h5>
+                    <button type="button" class="btn-close" title="Yopish" aria-label="Yopish" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <input type="email" id="loginEmail" class="form-control mb-2" placeholder="Email" title="Email manzil" aria-label="Email manzil" required>
+                        <input type="password" id="loginPassword" class="form-control mb-3" placeholder="Parol" title="Parol" aria-label="Parol" required>
+                        <button type="submit" class="btn btn-primary w-100" title="Kirish tugmasi" aria-label="Kirish tugmasi">Kirish</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ro'yxatdan O'tish</h5>
+                    <button type="button" class="btn-close" title="Yopish" aria-label="Yopish" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <input type="text" id="regName" class="form-control mb-2" placeholder="Ismingiz" title="Ismingiz" aria-label="Ismingiz" required>
+                        <input type="email" id="regEmail" class="form-control mb-2" placeholder="Email" title="Email manzil" aria-label="Email manzil" required>
+                        <input type="password" id="regPassword" class="form-control mb-3" placeholder="Parol" title="Parol" aria-label="Parol" required>
+                        <button type="submit" class="btn btn-success w-100" title="Ro'yxatdan o'tish tugmasi" aria-label="Ro'yxatdan o'tish tugmasi">Ro'yxatdan o'tish</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin: Restoran Qo'shish Modal -->
+    <div class="modal fade" id="addRestaurantModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yangi Restoran Qo'shish (Admin)</h5>
+                    <button type="button" class="btn-close" title="Yopish" aria-label="Yopish" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRestaurantForm">
+                        <input type="text" id="restTitle" class="form-control mb-2" placeholder="Restoran Nomi" title="Restoran Nomi" aria-label="Restoran Nomi" required>
+                        <input type="text" id="restAddress" class="form-control mb-2" placeholder="Manzili" title="Manzili" aria-label="Manzili" required>
+                        <input type="text" id="restPhone" class="form-control mb-2" placeholder="Telefon raqam" title="Telefon raqam" aria-label="Telefon raqam">
+                        <select id="restCategory" class="form-select mb-2" title="Kategoriya tanlang" aria-label="Kategoriya tanlang" required>
+                            <option value="">Kategoriya tanlang</option>
+                        </select>
+                        <div class="row g-2 mb-2">
+                            <div class="col"><input type="number" step="any" id="restLat" class="form-control" placeholder="Latitude (Masalan: 41.31)" title="Latitude" aria-label="Latitude" required></div>
+                            <div class="col"><input type="number" step="any" id="restLon" class="form-control" placeholder="Longitude (Masalan: 69.24)" title="Longitude" aria-label="Longitude" required></div>
+                        </div>
+                        <textarea id="restDesc" class="form-control mb-3" placeholder="Tavsif..." title="Tavsif" aria-label="Tavsif"></textarea>
+                        <button type="submit" class="btn btn-primary w-100" title="Saqlash tugmasi" aria-label="Saqlash tugmasi">Saqlash</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sharhlar Modali -->
+    <div class="modal fade" id="reviewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Sharhlar</h5>
+                    <button type="button" class="btn-close" title="Yopish" aria-label="Yopish" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="modalRestaurantId">
+                    <div id="reviewFormContainer" class="mb-4 p-3 bg-light rounded border d-none">
+                        <h6>Yangi sharh qoldirish:</h6>
+                        <form id="addReviewForm">
+                            <select id="reviewRating" class="form-select mb-2" title="Baho bering" aria-label="Baho bering" required>
+                                <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+                                <option value="4">⭐⭐⭐⭐ (4/5)</option>
+                                <option value="3">⭐⭐⭐ (3/5)</option>
+                                <option value="2">⭐⭐ (2/5)</option>
+                                <option value="1">⭐ (1/5)</option>
+                            </select>
+                            <textarea id="reviewComment" class="form-control mb-2" placeholder="Fikringiz..." title="Fikringiz" aria-label="Fikringiz" required></textarea>
+                            <button type="submit" class="btn btn-primary btn-sm" title="Sharh yuborish" aria-label="Sharh yuborish">Sharh yuborish</button>
+                        </form>
+                    </div>
+                    <div id="loginPrompt" class="alert alert-warning text-center">Sharh qoldirish uchun tizimga kiring.</div>
+                    <div id="reviewsContainer" class="list-group"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
