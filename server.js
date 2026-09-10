@@ -10,8 +10,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-const { Pool } = require('pg');
-
 const JWT_SECRET = process.env.JWT_SECRET || 'maxfiy_kalit_123';
 
 const pool = new Pool(
@@ -245,33 +243,37 @@ const createTablesAndSeed = async () => {
       console.log("👑 Boshlang'ich Admin yaratildi: admin@gmail.com / admin123");
     }
 
-    // Boshlang'ich Kategoriyalar yaratish
-    const catCheck = await pool.query("SELECT COUNT(*) FROM categories");
-    if (parseInt(catCheck.rows[0].count) === 0) {
-      await pool.query(`
-        INSERT INTO categories (name) VALUES 
-        ('Milliy Taomlar'), ('Fast Food'), ('Qahvaxona / Tortlar'), ('Osiyo Oshxonasi'), ('Yevropa Oshxonasi')
-      `);
+    // Boshlang'ich Kategoriyalarni yaratish va ID larini olish
+    const categories = ['Milliy Taomlar', 'Fast Food', 'Qahvaxona / Tortlar', 'Osiyo Oshxonasi', 'Yevropa Oshxonasi'];
+    for (const catName of categories) {
+      await pool.query("INSERT INTO categories (name) VALUES ($1) ON CONFLICT (name) DO NOTHING", [catName]);
     }
+
+    // Kategoriyalar ID sini aniqlash
+    const catRows = await pool.query("SELECT id, name FROM categories");
+    const categoryMap = {};
+    catRows.rows.forEach(c => { categoryMap[c.name] = c.id; });
 
     // Boshlang'ich Real Restoranlar yaratish
     const restCheck = await pool.query("SELECT COUNT(*) FROM restaurants");
     if (parseInt(restCheck.rows[0].count) === 0) {
       const realRestaurants = [
-        { title: 'Rayhon Milliy Taomlari', address: 'Navoiy ko`chasi, 27', phone: '+998712000000', category_id: 1, lat: 41.3168, lon: 69.2483, desc: 'Mashhur milliy taomlar' },
-        { title: 'Caravan Restaurant', address: 'Abdulla Qahhor ko`chasi, 22', phone: '+998712556296', category_id: 1, lat: 41.2891, lon: 69.2632, desc: 'O`zbek milliy taomlari' },
-        { title: 'Yapona Mama', address: 'Shota Rustaveli ko`chasi, 12', phone: '+998711401414', category_id: 4, lat: 41.2985, lon: 69.2665, desc: 'Yapon va Osiyo oshxonasi' },
-        { title: 'Bon! Coffee & Bakery', address: 'Sharaf Rashidov ko`chasi, 16', phone: '+998712000202', category_id: 3, lat: 41.3102, lon: 69.2721, desc: 'Fransuz qahvaxonasi' },
-        { title: 'Besh Qozon (Osh Markazi)', address: 'Iftxor ko`chasi, 1', phone: '+998712000100', category_id: 1, lat: 41.3468, lon: 69.2847, desc: 'Toshkentning eng katta palov markazi' }
+        { title: 'Rayhon Milliy Taomlari', address: 'Navoiy ko`chasi, 27', phone: '+998712000000', category: 'Milliy Taomlar', lat: 41.3168, lon: 69.2483, desc: 'Mashhur milliy taomlar' },
+        { title: 'Caravan Restaurant', address: 'Abdulla Qahhor ko`chasi, 22', phone: '+998712556296', category: 'Milliy Taomlar', lat: 41.2891, lon: 69.2632, desc: 'O`zbek milliy taomlari' },
+        { title: 'Yapona Mama', address: 'Shota Rustaveli ko`chasi, 12', phone: '+998711401414', category: 'Osiyo Oshxonasi', lat: 41.2985, lon: 69.2665, desc: 'Yapon va Osiyo oshxonasi' },
+        { title: 'Bon! Coffee & Bakery', address: 'Sharaf Rashidov ko`chasi, 16', phone: '+998712000202', category: 'Qahvaxona / Tortlar', lat: 41.3102, lon: 69.2721, desc: 'Fransuz qahvaxonasi' },
+        { title: 'Besh Qozon (Osh Markazi)', address: 'Iftxor ko`chasi, 1', phone: '+998712000100', category: 'Milliy Taomlar', lat: 41.3468, lon: 69.2847, desc: 'Toshkentning eng katta palov markazi' }
       ];
 
       for (const r of realRestaurants) {
+        const catId = categoryMap[r.category] || null;
         await pool.query(
           `INSERT INTO restaurants (title, address, phone, category_id, description, latitude, longitude)
            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [r.title, r.address, r.phone, r.category_id, r.desc, r.lat, r.lon]
+          [r.title, r.address, r.phone, catId, r.desc, r.lat, r.lon]
         );
       }
+      console.log("📍 Dastlabki restoranlar va kategoriyalar yaratildi!");
     }
   } catch (err) {
     console.error("Baza sozlanishida xatolik:", err.message);
