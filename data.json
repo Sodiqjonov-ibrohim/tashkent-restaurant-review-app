@@ -1,0 +1,49 @@
+{
+  "categories": [
+    { "id": 1, "name": "Milliy taomlar" },
+    { "id": 2, "name": "Fast Food" },
+    { "id": 3, "name": "Kofe va Shirinliklar" },
+    { "id": 4, "name": "Yevropa oshxonasi" }
+  ],
+  "restaurants": [
+    {
+      "id": 1,
+      "title": "Chorsu Oshi",
+      "description": "Toshkentning eng mazali milliy palovi va taomlari.",
+      "address": "Chorsu bozori yonida, Toshkent",
+      "latitude": 41.3275,
+      "longitude": 69.2411,
+      "phone": "+998 90 123 45 67",
+      "category_id": 1,
+      "category_name": "Milliy taomlar",
+      "avg_rating": "4.8",
+      "review_count": "12"
+    },
+    {
+      "id": 2,
+      "title": "EVOS Fast Food",
+      "description": "Tezkor va maza lavashlar to'plami.",
+      "address": "Amir Temur shoh ko'chasi, Toshkent",
+      "latitude": 41.3111,
+      "longitude": 69.2797,
+      "phone": "+998 71 200 00 00",
+      "category_id": 2,
+      "category_name": "Fast Food",
+      "avg_rating": "4.5",
+      "review_count": "25"
+    },
+    {
+      "id": 3,
+      "title": "ECCO Coffee",
+      "description": "Shirin kofe va shirinliklar maskani.",
+      "address": "Oybek ko'chasi, Toshkent",
+      "latitude": 41.2995,
+      "longitude": 69.2672,
+      "phone": "+998 93 555 44 33",
+      "category_id": 3,
+      "category_name": "Kofe va Shirinliklar",
+      "avg_rating": "4.9",
+      "review_count": "8"
+    }
+  ]
+}

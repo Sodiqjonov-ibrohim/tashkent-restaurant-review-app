@@ -89,57 +89,46 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// 3. Kategoriyalar
+const fs = require('fs');
+const path = require('path');
+
+// JSON ma'lumotlarni yuklab olish funksiyasi
+const getFallbackData = () => {
+  const rawData = fs.readFileSync(path.join(__dirname, 'data.json'));
+  return JSON.parse(rawData);
+};
+
+// 1. Kategoriyalar API
 app.get('/api/categories', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM categories ORDER BY name');
+    const result = await pool.query('SELECT * FROM categories ORDER BY name ASC');
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.log('Baza xatosi! JSON fayldan kategoriyalar yuklanmoqda...');
+    const data = getFallbackData();
+    res.json(data.categories);
   }
 });
 
-// 4. Restoranlar (To'g'rilangan va optimallashgan SQL)
+// 2. Restoranlar API
 app.get('/api/restaurants', async (req, res) => {
-  const { search, category_id, sort } = req.query;
   try {
-    let queryText = `
+    const query = `
       SELECT r.*, c.name as category_name,
-        COALESCE((SELECT AVG(rating) FROM reviews WHERE restaurant_id = r.id), 0) as average_rating,
-        COALESCE((SELECT COUNT(id) FROM reviews WHERE restaurant_id = r.id), 0) as review_count
+        COALESCE(AVG(rev.rating), 0) as avg_rating,
+        COUNT(rev.id) as review_count
       FROM restaurants r
       LEFT JOIN categories c ON r.category_id = c.id
+      LEFT JOIN reviews rev ON r.id = rev.restaurant_id
+      GROUP BY r.id, c.name
+      ORDER BY r.created_at DESC
     `;
-    
-    const values = [];
-    const conditions = [];
-
-    if (search) {
-      values.push(`%${search}%`);
-      conditions.push(`(r.title ILIKE $${values.length} OR r.address ILIKE $${values.length})`);
-    }
-
-    if (category_id) {
-      values.push(category_id);
-      conditions.push(`r.category_id = $${values.length}`);
-    }
-
-    if (conditions.length > 0) {
-      queryText += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    if (sort === 'rating') {
-      queryText += ' ORDER BY average_rating DESC';
-    } else if (sort === 'name') {
-      queryText += ' ORDER BY r.title ASC';
-    } else {
-      queryText += ' ORDER BY r.created_at DESC';
-    }
-
-    const result = await pool.query(queryText, values);
+    const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.log('Baza xatosi! JSON fayldan restoranlar yuklanmoqda...');
+    const data = getFallbackData();
+    res.json(data.restaurants);
   }
 });
 
