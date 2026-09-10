@@ -12,22 +12,16 @@ app.use(express.static('public'));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'maxfiy_kalit_123';
 
-const pool = new Pool(
-  process.env.DATABASE_URL
-    ? {
-        connectionString: process.env.DATABASE_URL,
-        ssl: {
-          rejectUnauthorized: false
-        }
-      }
-    : {
-        user: process.env.DB_USER || 'postgres',
-        host: process.env.DB_HOST || 'localhost',
-        database: process.env.DB_NAME || 'tashkent_restaurants',
-        password: process.env.DB_PASSWORD || '12345',
-        port: process.env.DB_PORT || 5432,
-      }
-);
+// --- TO'G'RILANGAN BAZAGA ULANISH QISMI ---
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:12345@localhost:5432/tashkent_restaurants',
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+});
+
+// Bazaga ulanishda xatolik bo'lsa server crash bo'lmasligi uchun
+pool.on('error', (err) => {
+  console.error('Kutilmagan DB xatoligi:', err);
+});
 
 // --- MIDDLEWARE: Token tekshirish ---
 const authenticateToken = (req, res, next) => {
@@ -92,7 +86,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// 3. Kategoriyalar va Restoranlarni olish
+// 3. Kategoriyalar
 app.get('/api/categories', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM categories ORDER BY name');
@@ -102,36 +96,43 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
+// 4. Restoranlar (To'g'rilangan va optimallashgan SQL)
 app.get('/api/restaurants', async (req, res) => {
   const { search, category_id, sort } = req.query;
-  let queryText = `
-    SELECT r.*, c.name as category_name,
-      COALESCE(AVG(rev.rating), 0) as average_rating,
-      COUNT(rev.id) as review_count
-    FROM restaurants r
-    LEFT JOIN categories c ON r.category_id = c.id
-    LEFT JOIN reviews rev ON r.id = rev.restaurant_id
-  `;
-  const values = [];
-  const conditions = [];
-
-  if (search) {
-    values.push(`%${search}%`);
-    conditions.push(`(r.title ILIKE $${values.length} OR r.address ILIKE $${values.length})`);
-  }
-  if (category_id) {
-    values.push(category_id);
-    conditions.push(`r.category_id = $${values.length}`);
-  }
-  if (conditions.length > 0) queryText += ' WHERE ' + conditions.join(' AND ');
-
-  queryText += ' GROUP BY r.id, c.name';
-
-  if (sort === 'rating') queryText += ' ORDER BY average_rating DESC';
-  else if (sort === 'name') queryText += ' ORDER BY r.title ASC';
-  else queryText += ' ORDER BY r.created_at DESC';
-
   try {
+    let queryText = `
+      SELECT r.*, c.name as category_name,
+        COALESCE((SELECT AVG(rating) FROM reviews WHERE restaurant_id = r.id), 0) as average_rating,
+        COALESCE((SELECT COUNT(id) FROM reviews WHERE restaurant_id = r.id), 0) as review_count
+      FROM restaurants r
+      LEFT JOIN categories c ON r.category_id = c.id
+    `;
+    
+    const values = [];
+    const conditions = [];
+
+    if (search) {
+      values.push(`%${search}%`);
+      conditions.push(`(r.title ILIKE $${values.length} OR r.address ILIKE $${values.length})`);
+    }
+
+    if (category_id) {
+      values.push(category_id);
+      conditions.push(`r.category_id = $${values.length}`);
+    }
+
+    if (conditions.length > 0) {
+      queryText += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    if (sort === 'rating') {
+      queryText += ' ORDER BY average_rating DESC';
+    } else if (sort === 'name') {
+      queryText += ' ORDER BY r.title ASC';
+    } else {
+      queryText += ' ORDER BY r.created_at DESC';
+    }
+
     const result = await pool.query(queryText, values);
     res.json(result.rows);
   } catch (err) {
@@ -139,7 +140,7 @@ app.get('/api/restaurants', async (req, res) => {
   }
 });
 
-// 4. Sharhlar
+// 5. Sharhlar
 app.get('/api/restaurants/:id/reviews', async (req, res) => {
   try {
     const result = await pool.query(
