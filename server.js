@@ -11,13 +11,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// SSL sertifikat xatosini aylanib o'tuvchi to'g'ri ulanish
-const DB_URL = process.env.DATABASE_URL || 'postgresql://postgres.omtgapknfqbzzrtppznx:xusniddin001@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require';
+// SSL va Sertifikat xatosini bartaraf etuvchi to'g'ri URL
+const DB_URL = process.env.DATABASE_URL || 'postgresql://postgres.omtgapknfqbzzrtppznx:xusniddin001@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=no-verify';
 
 const pool = new Pool({
   connectionString: DB_URL,
   ssl: {
-    rejectUnauthorized: false // Sertifikat xatosini (self-signed certificate) e'tiborsiz qoldirish
+    rejectUnauthorized: false
   }
 });
 
